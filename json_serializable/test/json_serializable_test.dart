@@ -350,12 +350,9 @@ String _runForElementNamedWithGenerator(
       .singleWhere((e) => e is! ConstVariableElement && e.name == name);
   final annotation = generator.typeChecker.firstAnnotationOf(element);
   final generated = generator
-      .generateForAnnotatedElement(element, ConstantReader(annotation), null)
-      .map((e) => e.trim())
-      .where((e) => e.isNotEmpty)
-      .map((e) => '$e\n\n')
-      .join();
-
+      .generateForAnnotatedElement(
+          element, ConstantReader(annotation), null, false)
+      .trim();
   final output = _formatter.format(generated);
   printOnFailure("r'''\n$output'''");
   return output;

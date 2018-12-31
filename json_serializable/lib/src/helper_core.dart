@@ -16,8 +16,9 @@ import 'utils.dart';
 abstract class HelperCore {
   final ClassElement element;
   final JsonSerializable config;
+  final bool deviceConstruction;
 
-  HelperCore(this.element, this.config);
+  HelperCore(this.element, this.config, this.deviceConstruction);
 
   Iterable<TypeHelper> get allTypeHelpers;
 

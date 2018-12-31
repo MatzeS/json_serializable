@@ -6,7 +6,8 @@ import 'package:analyzer/dart/element/element.dart';
 import 'package:build/build.dart';
 import 'package:json_annotation/json_annotation.dart';
 import 'package:source_gen/source_gen.dart';
-
+import 'package:blackbird_common/member_identifier.dart';
+import 'dart:async';
 import 'decode_helper.dart';
 import 'encoder_helper.dart';
 import 'field_helpers.dart';
@@ -75,8 +76,37 @@ class JsonSerializableGenerator
               List.unmodifiable(typeHelpers.followedBy(_defaultHelpers)));
 
   @override
-  Iterable<String> generateForAnnotatedElement(
-      Element element, ConstantReader annotation, BuildStep buildStep) {
+  FutureOr<String> generate(LibraryReader library, BuildStep buildStep) async {
+    var values = Set<String>();
+
+    for (var annotatedElement in library.annotatedWith(typeChecker)) {
+      var generatedValue = generateForAnnotatedElement(annotatedElement.element,
+          annotatedElement.annotation, buildStep, false);
+      values.add(generatedValue);
+    }
+
+    var devices = library.allElements
+        .where((e) =>
+            TypeChecker.fromUrl("asset:blackbird/lib/src/device.dart#Device")
+                .isAssignableFrom(e) &&
+            !TypeChecker.fromUrl("asset:blackbird/lib/src/device.dart#Device")
+                .isExactly(e) &&
+            TypeChecker.fromUrl("asset:blackbird/lib/src/device.dart#Ignore")
+                .annotationsOf(e)
+                .isEmpty)
+        .where((e) {
+          return !deviceClassIsAbstract(e as ClassElement);
+        })
+        .map((e) => generateForAnnotatedElement(e, null, buildStep, true))
+        .toList();
+
+    return values.join('\n\n') + devices.join('\n\n');
+  }
+
+  @override
+  String generateForAnnotatedElement(
+      Element element, ConstantReader annotation, BuildStep buildStep,
+      [bool deviceConstruction]) {
     if (element is! ClassElement) {
       final name = element.name;
       throw InvalidGenerationSourceError('Generator cannot target `$name`.',
@@ -85,8 +115,9 @@ class JsonSerializableGenerator
     }
 
     final classElement = element as ClassElement;
-    final helper = _GeneratorHelper(this, classElement, annotation);
-    return helper._generate();
+    final helper =
+        _GeneratorHelper(this, classElement, annotation, deviceConstruction);
+    return helper._generate().join('\n');
   }
 }
 
@@ -94,9 +125,10 @@ class _GeneratorHelper extends HelperCore with EncodeHelper, DecodeHelper {
   final JsonSerializableGenerator _generator;
   final _addedMembers = Set<String>();
 
-  _GeneratorHelper(
-      this._generator, ClassElement element, ConstantReader annotation)
-      : super(element, mergeConfig(_generator.config, annotation));
+  _GeneratorHelper(this._generator, ClassElement element,
+      ConstantReader annotation, bool deviceConstruction)
+      : super(element, mergeConfig(_generator.config, annotation),
+            deviceConstruction);
 
   @override
   void addMember(String memberContent) {
@@ -108,7 +140,22 @@ class _GeneratorHelper extends HelperCore with EncodeHelper, DecodeHelper {
 
   Iterable<String> _generate() sync* {
     assert(_addedMembers.isEmpty);
-    final sortedFields = createSortedFieldSet(element);
+
+    print(element);
+
+    var sortedFields = createSortedFieldSet(element);
+
+    if (TypeChecker.fromUrl("asset:blackbird/lib/src/device.dart#Device")
+        .isAssignableFrom(element)) {
+      sortedFields = sortedFields
+          .where((f) => f.isPublic && !f.name.contains('blackbird'))
+          .toList();
+      sortedFields = sortedFields
+          .where((f) =>
+              isProperty(f.getter ?? f.setter) &&
+              (f.getter ?? f.setter).isSynthetic)
+          .toList();
+    }
 
     // Used to keep track of why a field is ignored. Useful for providing
     // helpful errors when generating constructor calls that try to use one of

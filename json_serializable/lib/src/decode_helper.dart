@@ -104,6 +104,10 @@ abstract class DecodeHelper implements HelperCore {
               .toList(),
           unavailableReasons,
           deserializeFun);
+      var content = data.content;
+      if (deviceConstruction)
+        content =
+            data.content.substring(0, data.content.length - 2) + '.device()';
 
       _writeChecks(
           2,
@@ -112,7 +116,7 @@ abstract class DecodeHelper implements HelperCore {
               .where((fe) => data.usedCtorParamsAndFields.contains(fe.name)));
 
       _buffer.write('''
-  return ${data.content}''');
+  return ${content}''');
       for (final field in data.fieldsToSet) {
         _buffer.writeln();
         _buffer.write('    ..$field = ');
