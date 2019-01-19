@@ -43,11 +43,19 @@ class JsonHelper extends TypeHelper<TypeHelperContextWithConfig> {
 
     final fromJsonCtor = classElement.constructors
         .singleWhere((ce) => ce.name == 'fromJson', orElse: () => null);
+    final fromJsonMethod = classElement.methods
+        .where((m) =>
+            m.isStatic &&
+            m.isPublic &&
+            m.returnType.displayName == classElement.displayName)
+        .singleWhere((ce) => ce.name == 'fromJson', orElse: () => null);
+
+    final fromJsonRef = fromJsonCtor ?? fromJsonMethod;
 
     String asCast;
-    if (fromJsonCtor != null) {
+    if (fromJsonRef != null) {
       // TODO: should verify that this type is a valid JSON type
-      final asCastType = fromJsonCtor.parameters.first.type;
+      final asCastType = fromJsonRef.parameters.first.type;
       asCast = asStatement(asCastType);
     } else if (_annotation(context.config, type)?.createFactory == true) {
       if (context.config.anyMap) {

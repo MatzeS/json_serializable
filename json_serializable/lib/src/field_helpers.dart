@@ -43,10 +43,6 @@ class _FieldSet implements Comparable<_FieldSet> {
       // in this case, you want to prioritize the enclosingElement that is more
       // "super".
 
-      // print(b);
-      // print(b.enclosingElement);
-      // print(checkerA);
-
       if (checkerA.isAssignableFrom(b.enclosingElement)) {
         return -1;
       }

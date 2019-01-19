@@ -141,8 +141,6 @@ class _GeneratorHelper extends HelperCore with EncodeHelper, DecodeHelper {
   Iterable<String> _generate() sync* {
     assert(_addedMembers.isEmpty);
 
-    print(element);
-
     var sortedFields = createSortedFieldSet(element);
 
     if (TypeChecker.fromUrl("asset:blackbird/lib/src/device.dart#Device")
