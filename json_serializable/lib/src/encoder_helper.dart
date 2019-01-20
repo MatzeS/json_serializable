@@ -4,10 +4,13 @@
 
 import 'package:analyzer/dart/element/element.dart';
 import 'package:json_annotation/json_annotation.dart';
+import 'package:source_gen/source_gen.dart';
 
 import 'constants.dart';
 import 'helper_core.dart';
 import 'type_helper.dart';
+
+const classAssetKey = "'json_serializable.className'";
 
 abstract class EncodeHelper implements HelperCore {
   String _fieldAccess(FieldElement field) {
@@ -149,10 +152,12 @@ class ${_wrapperClassName(true)} extends \$JsonMapWrapper {
     buffer.writeAll(fields.map((field) {
       final access = _fieldAccess(field);
       final value =
-          '${safeNameAccess(field)}: ${_serializeField(field, access)}';
+          '${safeNameAccess(field)}: ${_serializeField(field, access)},';
       return '        $value';
-    }), ',\n');
+    }), '\n');
 
+    var classAsset = TypeChecker.fromStatic(element.type).toString();
+    buffer.write('${classAssetKey}: "${classAsset}",');
     if (fields.isNotEmpty) {
       buffer.write('\n      ');
     }
