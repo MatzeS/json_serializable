@@ -90,9 +90,19 @@ class JsonSerializableGenerator
   }
 }
 
+typedef bool FieldFilter(FieldElement element);
+
+String generateFromExternal(ClassElement classElement, FieldFilter filter) {
+  final helper =
+      _GeneratorHelper(const JsonSerializableGenerator(), classElement, null);
+  helper.fieldFilter = filter;
+  return helper._generate().join('');
+}
+
 class _GeneratorHelper extends HelperCore with EncodeHelper, DecodeHelper {
   final JsonSerializableGenerator _generator;
   final _addedMembers = Set<String>();
+  FieldFilter fieldFilter = (f) => true;
 
   _GeneratorHelper(
       this._generator, ClassElement element, ConstantReader annotation)
@@ -108,7 +118,9 @@ class _GeneratorHelper extends HelperCore with EncodeHelper, DecodeHelper {
 
   Iterable<String> _generate() sync* {
     assert(_addedMembers.isEmpty);
-    final sortedFields = createSortedFieldSet(element);
+    var sortedFields = createSortedFieldSet(element).toList();
+
+    sortedFields = sortedFields.where(fieldFilter).toList();
 
     // Used to keep track of why a field is ignored. Useful for providing
     // helpful errors when generating constructor calls that try to use one of
