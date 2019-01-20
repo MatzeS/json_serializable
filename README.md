@@ -1,3 +1,5 @@
+This is not my work, this is forked from https://github.com/dart-lang/json_serializable and slightly modified.
+
 # [![Build Status](https://travis-ci.org/dart-lang/json_serializable.svg?branch=master)](https://travis-ci.org/dart-lang/json_serializable)
 
 Provides [source_gen] `Generator`s to create code for JSON serialization and

@@ -1,3 +1,0 @@
-[submodule "dependencies/blackbird"]
-	path = dependencies/blackbird
-	url = https://github.com/MatzeS/blackbird
